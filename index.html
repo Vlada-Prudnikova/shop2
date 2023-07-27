@@ -9,6 +9,8 @@
     <div class="products"></div>
     <div class="product-details"></div>
     <button type="button" class="button">Buy</button>
+    <button class="my-orders-button">Мої замовлення</button>
+    <div class="orders-container"></div>
 
     <form class="order-form" style="display: none">
       <label for="pib">ПІБ покупця:</label>
@@ -73,6 +75,7 @@
         { id: 2, name: "Товар 2", categoryId: 1, description: "Опис товару 2" },
         { id: 3, name: "Товар 3", categoryId: 2, description: "Опис товару 3" },
       ];
+      let orders = JSON.parse(localStorage.getItem("orders")) || [];
 
       function displayCategories() {
         categoriesBlock.innerHTML = "";
@@ -123,6 +126,54 @@
         orderForm.style.display = "block";
       }
 
+      function displayOrders() {
+        productsBlock.style.display = "none"; // Hide the products block
+        categoriesBlock.style.display = "none"; // Hide the categories block
+        orderForm.style.display = "none"; // Hide the order form
+
+        const ordersContainer = document.querySelector(".orders-container");
+        ordersContainer.innerHTML = "";
+
+        for (const order of orders) {
+          const orderElement = document.createElement("div");
+          const orderDateElement = document.createElement("p");
+          const orderPriceElement = document.createElement("p");
+
+          orderDateElement.textContent = `Дата замовлення: ${order.date}`;
+          orderPriceElement.textContent = `Ціна: ${order.price} грн`;
+
+          orderElement.appendChild(orderDateElement);
+          orderElement.appendChild(orderPriceElement);
+
+          orderElement.addEventListener("click", () => {
+            displayOrderDetails(order);
+          });
+
+          orderElement.addEventListener("contextmenu", (event) => {
+            event.preventDefault(); // Prevent default right-click menu
+            deleteOrder(order);
+          });
+
+          ordersContainer.appendChild(orderElement);
+        }
+      }
+
+      function deleteOrder(orderToDelete) {
+        orders = orders.filter((order) => order !== orderToDelete);
+        localStorage.setItem("orders", JSON.stringify(orders));
+        displayOrders(); // Refresh the displayed orders after deletion
+      }
+
+      const myOrdersButton = document.querySelector(".my-orders-button");
+      myOrdersButton.addEventListener("click", () => {
+        displayOrders();
+      });
+
+      function saveOrderToLocalStorage(order) {
+        orders.push(order);
+        localStorage.setItem("orders", JSON.stringify(orders));
+      }
+
       function submitOrder() {
         const pibInput = document.getElementById("pib");
         const cityInput = document.getElementById("city");
@@ -138,7 +189,7 @@
           alert("Будь ласка, заповніть всі обов'язкові поля!");
           return false;
         }
-
+        saveOrderToLocalStorage(orderDetails);
         const orderDetails = {
           pib: pibInput.value.trim(),
           city: cityInput.value,
